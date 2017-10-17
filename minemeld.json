@@ -1,0 +1,19 @@
+{
+    "version": "0.1b1",
+    "name": "minemeld-centrify",
+    "author": "Francesco Vigo",
+    "author_email": "fvigo@paloaltonetworks.com",
+    "description": "MineMeld Extension for Centrify",
+    "entry_points": {
+	"minemeld_webui": {
+            "mmcentrifyWebui" : "mmcentrify:webui_blueprint"
+        },
+        "minemeld_nodes": {
+            "mmcentrify.CentrifyOutput": "mmcentrify.node:CentrifyOutput"
+        },
+        "minemeld_prototypes": {
+            "mmcentrify.prototypes": "mmcentrify:prototypes"
+        }
+    },
+    "manifest_version": 0
+}

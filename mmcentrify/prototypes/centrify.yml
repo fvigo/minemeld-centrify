@@ -1,0 +1,25 @@
+url: https://github.com/fvigo/minemeld-centrify
+description: >
+  MineMeld Extension for Centrify
+
+prototypes:
+  user_output:
+    author: Francesco Vigo - Palo Alto Networks
+    class: mmcentrify.CentrifyOutput
+    development_status: EXPERIMENTAL
+    node_type: output
+    indicator_types:
+      - any
+    tags:
+      - extension
+      - centrify
+      - user-id
+      - remediation
+    description: >
+      MineMeld Extension for Centrify, implementing a single Output Node for the user-id remediation use case. Parameters can be configured through the WebUI. Domain mapping is still not functional.
+
+    config:
+      # Domain Map
+      domain_map: your_domain_map
+
+
