@@ -1,20 +1,19 @@
 
-console.log('Loading Okta WebUI');
+console.log('Loading Centrify WebUI');
 
 (function() {
 
-function OKTASideConfigController($scope, MinemeldConfigService, MineMeldRunningConfigStatusService,
+function CentrifySideConfigController($scope, MinemeldConfigService, MineMeldRunningConfigStatusService,
                                   toastr, $modal, ConfirmService, $timeout) {
     var vm = this;
 
     // side config settings
-    vm.okta_token = undefined;
-    vm.okta_base_url = undefined;
-
-    vm.quarantine_group = undefined;
-    vm.suspend_user = undefined;
-    vm.unsuspend_user = undefined;
-    vm.clear_user_sessions = undefined;
+    vm.centrify_user = undefined;
+    vm.centrify_password = undefined;
+    vm.centrify_tenant = undefined;
+    
+    vm.auth_timeout = undefined;
+    vm.quarantine_role = undefined;
 
     vm.loadSideConfig = function() {
         var nodename = $scope.$parent.vm.nodename;
@@ -25,50 +24,44 @@ function OKTASideConfigController($scope, MinemeldConfigService, MineMeldRunning
                 return;
             }
 
-            if (result.okta_token) {
-                vm.okta_token = result.okta_token;
+            if (result.centrify_user) {
+                vm.centrify_user = result.centrify_user;
             } else {
-                vm.okta_token = undefined;
+                vm.centrify_user = undefined;
             }
 
-            if (result.okta_base_url) {
-                vm.okta_base_url = result.okta_base_url;
+            if (result.centrify_password) {
+                vm.centrify_password = result.centrify_password;
             } else {
-                vm.okta_base_url = undefined;
+                vm.centrify_password = undefined;
             }
 
-            if (result.quarantine_group) {
-                vm.quarantine_group = result.quarantine_group;
+            if (result.centrify_tenant) {
+                vm.centrify_tenant = result.centrify_tenant;
             } else {
-                vm.quarantine_group = undefined;
+                vm.centrify_tenant = undefined;
             }
 
-            if (typeof result.suspend_user !== 'undefined') {
-                vm.suspend_user = result.suspend_user;
+            if (result.quarantine_role) {
+                vm.quarantine_role = result.quarantine_role;
             } else {
-                vm.suspend_user = undefined;
+                vm.quarantine_role = undefined;
             }
 
-            if (typeof result.unsuspend_user !== 'undefined') {
-                vm.unsuspend_user = result.unsuspend_user;
+            if (result.auth_timeout) {
+                vm.auth_timeout = result.auth_timeout;
             } else {
-                vm.unsuspend_user = undefined;
+                vm.auth_timeout = undefined;
             }
 
-            if (typeof result.clear_user_sessions !== 'undefined') {
-                vm.clear_user_sessions = result.clear_user_sessions;
-            } else {
-                vm.clear_user_sessions = undefined;
-            }
 
         }, (error) => {
             toastr.error('ERROR RETRIEVING NODE SIDE CONFIG: ' + error.status);
-            vm.okta_token = undefined;
-            vm.okta_base_url = undefined;
-            vm.quarantine_group = undefined;
-            vm.suspend_user = undefined;
-            vm.unsuspend_user = undefined;
-            vm.clear_user_sessions = undefined;
+            vm.centrify_user = undefined;
+            vm.centrify_password = undefined;
+            vm.centrify_tenant = undefined;
+            vm.quarantine_role = undefined;
+            vm.auth_timeout  = undefined;
         })
         .finally();
     };
@@ -77,28 +70,24 @@ function OKTASideConfigController($scope, MinemeldConfigService, MineMeldRunning
         var side_config = {};
         var nodename = $scope.$parent.vm.nodename;
 
-        if (vm.okta_token) {
-            side_config.okta_token = vm.okta_token;
+        if (vm.centrify_user) {
+            side_config.centrify_user = vm.centrify_user;
         }
 
-        if (vm.okta_base_url) {
-            side_config.okta_base_url = vm.okta_base_url;
+        if (vm.centrify_password) {
+            side_config.centrify_password = vm.centrify_password;
         }
 
-        if (vm.okta_base_url) {
-            side_config.quarantine_group = vm.quarantine_group;
+        if (vm.centrify_tenant) {
+            side_config.centrify_tenant = vm.centrify_tenant;
         }
 
-        if (typeof vm.suspend_user !== 'undefined') {
-            side_config.suspend_user = vm.suspend_user;
+        if (vm.auth_timeout) {
+            side_config.auth_timeout = vm.auth_timeout;
         }
 
-        if (typeof vm.unsuspend_user !== 'undefined') {
-            side_config.unsuspend_user = vm.unsuspend_user;
-        }
-
-        if (typeof vm.clear_user_sessions !== 'undefined') {
-            side_config.clear_user_sessions = vm.clear_user_sessions;
+        if (vm.quarantine_role) {
+            side_config.quarantine_role = vm.quarantine_role;
         }
 
         return MinemeldConfigService.saveDataFile(
@@ -108,10 +97,10 @@ function OKTASideConfigController($scope, MinemeldConfigService, MineMeldRunning
         );
     };
 
-    vm.setOktaToken = function() {
+   vm.setCentrifyUser = function() {
         var mi = $modal.open({
-            templateUrl: '/extensions/webui/mmoktaWebui/okta.output.key.html',
-            controller: ['$modalInstance', OKTAAuthTokenController],
+            templateUrl: '/extensions/webui/mmcentrifyWebui/centrify.output.apiuser.html',
+            controller: ['$modalInstance', CentrifyUserController],
             controllerAs: 'vm',
             bindToController: true,
             backdrop: 'static',
@@ -119,22 +108,22 @@ function OKTASideConfigController($scope, MinemeldConfigService, MineMeldRunning
         });
 
         mi.result.then((result) => {
-            vm.okta_token = result.okta_token;
+            vm.centrify_user = result.centrify_user;
 
             return vm.saveSideConfig();
         })
         .then((result) => {
-            toastr.success('AUTOMATION KEY SET');
+            toastr.success('API USER SET');
             vm.loadSideConfig();
         }, (error) => {
-            toastr.error('ERROR SETTING AUTOMATION KEY: ' + error.statusText);
+            toastr.error('ERROR SETTING API USER: ' + error.statusText);
         });
     };
 
-   vm.setBaseUrl = function() {
+    vm.setCentrifyPassword = function() {
         var mi = $modal.open({
-            templateUrl: '/extensions/webui/mmoktaWebui/okta.output.baseurl.html',
-            controller: ['$modalInstance', OKTABaseUrlController],
+            templateUrl: '/extensions/webui/mmcentrifyWebui/centrify.output.apipassword.html',
+            controller: ['$modalInstance', CentrifyPasswordController],
             controllerAs: 'vm',
             bindToController: true,
             backdrop: 'static',
@@ -142,23 +131,22 @@ function OKTASideConfigController($scope, MinemeldConfigService, MineMeldRunning
         });
 
         mi.result.then((result) => {
-            vm.okta_base_url = result.okta_base_url;
+            vm.centrify_password = result.centrify_password;
 
             return vm.saveSideConfig();
         })
         .then((result) => {
-            toastr.success('BASE URL SET');
+            toastr.success('API PASSWORD SET');
             vm.loadSideConfig();
         }, (error) => {
-            toastr.error('ERROR SETTING BASE URL: ' + error.statusText);
+            toastr.error('ERROR SETTING API PASSWORD: ' + error.statusText);
         });
     };
 
-   vm.setQuarantineGroup = function() {
-
+   vm.setCentrifyTenant = function() {
         var mi = $modal.open({
-            templateUrl: '/extensions/webui/mmoktaWebui/okta.output.quarantinegroup.html',
-            controller: ['$modalInstance', OKTAQuarantineGroupController],
+            templateUrl: '/extensions/webui/mmcentrifyWebui/centrify.output.tenant.html',
+            controller: ['$modalInstance', CentrifyTenantController],
             controllerAs: 'vm',
             bindToController: true,
             backdrop: 'static',
@@ -166,151 +154,77 @@ function OKTASideConfigController($scope, MinemeldConfigService, MineMeldRunning
         });
 
         mi.result.then((result) => {
-            vm.quarantine_group = result.quarantine_group;
+            vm.centrify_tenant = result.centrify_tenant;
 
             return vm.saveSideConfig();
         })
         .then((result) => {
-            toastr.success('QUARANTINE GROUP SET');
+            toastr.success('CENTRIFY TENANT SET');
             vm.loadSideConfig();
         }, (error) => {
-            toastr.error('ERROR SETTING QUARANTINE GROUP: ' + error.statusText);
+            toastr.error('ERROR SETTING CENTRIFY TENANT: ' + error.statusText);
         });
     };
 
-    vm.toggleSuspendUser = function() {
-        var p, new_value;
+   vm.setQuarantineRole = function() {
 
-        if (typeof this.suspend_user === 'undefined' || !this.suspend_user) {
-            new_value = true;
-            p = ConfirmService.show(
-                'SUSPEND OKTA USER',
-                'Suspend OKTA User when an indicator is added ?'
-            );
-        } else {
-            new_value = false;
-            p = ConfirmService.show(
-                'SUSPEND OKTA USER',
-                'Do not suspend OKTA User when an indicator is added ?'
-            );
-        }
+        var mi = $modal.open({
+            templateUrl: '/extensions/webui/mmcentrifyWebui/centrify.output.quarantinerole.html',
+            controller: ['$modalInstance', CentrifyQuarantineRoleController],
+            controllerAs: 'vm',
+            bindToController: true,
+            backdrop: 'static',
+            animation: false
+        });
 
-        p.then((result) => {
-            vm.suspend_user = new_value;
+        mi.result.then((result) => {
+            vm.quarantine_role = result.quarantine_role;
 
-            return vm.saveSideConfig().then((result) => {
-                toastr.success('SUSPEND OKTA USER TOGGLED');
-                vm.loadSideConfig();
-            }, (error) => {
-                toastr.error('ERROR TOGGLING SUSPEND OKTA USER: ' + error.statusText);
-            });
+            return vm.saveSideConfig();
+        })
+        .then((result) => {
+            toastr.success('QUARANTINE ROLE SET');
+            vm.loadSideConfig();
+        }, (error) => {
+            toastr.error('ERROR SETTING QUARANTINE ROLE: ' + error.statusText);
         });
     };
 
-    vm.toggleUnsuspendUser = function() {
-        var p, new_value;
+    vm.setAuthTimeout = function() {
 
-        if (typeof this.unsuspend_user === 'undefined' || !this.unsuspend_user) {
-            new_value = true;
-            p = ConfirmService.show(
-                'UNSUSPEND OKTA USER',
-                'Unsuspend OKTA User when an indicator is withdrawn ?'
-            );
-        } else {
-            new_value = false;
-            p = ConfirmService.show(
-                'UNSUSPEND OKTA USER',
-                'Do not unsuspend OKTA User when an indicator is withdrawn ?'
-            );
-        }
+        var mi = $modal.open({
+            templateUrl: '/extensions/webui/mmcentrifyWebui/centrify.output.authtimeout.html',
+            controller: ['$modalInstance', CentrifyAuthTimeoutController],
+            controllerAs: 'vm',
+            bindToController: true,
+            backdrop: 'static',
+            animation: false
+        });
 
-        p.then((result) => {
-            vm.unsuspend_user = new_value;
+        mi.result.then((result) => {
+            vm.auth_timeout = result.auth_timeout;
 
-            return vm.saveSideConfig().then((result) => {
-                toastr.success('UNSUSPEND OKTA USER TOGGLED');
-                vm.loadSideConfig();
-            }, (error) => {
-                toastr.error('ERROR TOGGLING UNSUSPEND OKTA USER: ' + error.statusText);
-            });
+            return vm.saveSideConfig();
+        })
+        .then((result) => {
+            toastr.success('AUTH TIMEOUT SET');
+            vm.loadSideConfig();
+        }, (error) => {
+            toastr.error('ERROR SETTING AUTH TIMEOUT: ' + error.statusText);
         });
     };
 
-    vm.toggleClearUserSessions = function() {
-        var p, new_value;
-
-        if (typeof this.clear_user_sessions === 'undefined' || !this.clear_user_sessions) {
-            new_value = true;
-            p = ConfirmService.show(
-                'CLEAR OKTA USER SESSIONS',
-                'Clear OKTA User Sessions when an indicator is found ?'
-            );
-        } else {
-            new_value = false;
-            p = ConfirmService.show(
-                'CLEAR OKTA USER SESSIONS',
-                'Do not clear OKTA User Sessions when an indicator is found ?'
-            );
-        }
-
-        p.then((result) => {
-            vm.clear_user_sessions = new_value;
-
-            return vm.saveSideConfig().then((result) => {
-                toastr.success('CLEAR OKTA USER SESSIONS TOGGLED');
-                vm.loadSideConfig();
-            }, (error) => {
-                toastr.error('ERROR TOGGLING CLEAR OKTA USER SESSIONS: ' + error.statusText);
-            });
-        });
-    };
 
     vm.loadSideConfig();
 }
 
-function OKTAAuthTokenController($modalInstance) {
+function CentrifyUserController($modalInstance) {
     var vm = this;
 
-    vm.okta_token = undefined;
-    vm.okta_token2 = undefined;
-
-    vm.valid = function() {
-        if (vm.okta_token !== vm.okta_token2) {
-            angular.element('#fgOktaToken1').addClass('has-error');
-            angular.element('#fgOktaToken2').addClass('has-error');
-
-            return false;
-        }
-        angular.element('#fgOktaToken1').removeClass('has-error');
-        angular.element('#fgOktaToken2').removeClass('has-error');
-
-        if (!vm.okta_token) {
-            return false;
-        }
-
-        return true;
-    };
-
-    vm.save = function() {
-        var result = {};
-
-        result.okta_token = vm.okta_token2;
-
-        $modalInstance.close(result);
-    }
-
-    vm.cancel = function() {
-        $modalInstance.dismiss();
-    }
-}
-
-function OKTABaseUrlController($modalInstance) {
-    var vm = this;
-
-    vm.okta_base_url = undefined;
+    vm.centrify_user = undefined;
     
     vm.valid = function() {
-        if (!vm.okta_base_url) {
+        if (!vm.centrify_user) {
             return false;
         }
 
@@ -320,7 +234,7 @@ function OKTABaseUrlController($modalInstance) {
     vm.save = function() {
         var result = {};
 
-        result.okta_base_url = vm.okta_base_url
+        result.centrify_user = vm.centrify_user;
 
         $modalInstance.close(result);
     }
@@ -330,13 +244,23 @@ function OKTABaseUrlController($modalInstance) {
     }
 }
 
-function OKTAQuarantineGroupController($modalInstance) {
+function CentrifyPasswordController($modalInstance) {
     var vm = this;
 
-    vm.quarantine_group = undefined;
-    
+    vm.centrify_password = undefined;
+    vm.centrify_password2 = undefined;
+
     vm.valid = function() {
-        if (!vm.quarantine_group) {
+        if (vm.centrify_password !== vm.centrify_password2) {
+            angular.element('#fgCentrifyPassword1').addClass('has-error');
+            angular.element('#fgCentrifyPassword2').addClass('has-error');
+
+            return false;
+        }
+        angular.element('#fgCentrifyPassword1').removeClass('has-error');
+        angular.element('#fgCentrifyPassword2').removeClass('has-error');
+
+        if (!vm.centrify_password) {
             return false;
         }
 
@@ -346,7 +270,7 @@ function OKTAQuarantineGroupController($modalInstance) {
     vm.save = function() {
         var result = {};
 
-        result.quarantine_group = vm.quarantine_group
+        result.centrify_password = vm.centrify_password2;
 
         $modalInstance.close(result);
     }
@@ -356,25 +280,106 @@ function OKTAQuarantineGroupController($modalInstance) {
     }
 }
 
-angular.module('mmoktaWebui', [])
-    .controller('OKTASideConfigController', [
+function CentrifyTenantController($modalInstance) {
+    var vm = this;
+
+    vm.centrify_tenant = undefined;
+    
+    vm.valid = function() {
+        if (!vm.centrify_tenant) {
+            return false;
+        }
+
+        return true;
+    };
+
+    vm.save = function() {
+        var result = {};
+
+        result.centrify_tenant = vm.centrify_tenant;
+
+        $modalInstance.close(result);
+    }
+
+    vm.cancel = function() {
+        $modalInstance.dismiss();
+    }
+}
+
+function CentrifyQuarantineRoleController($modalInstance) {
+    var vm = this;
+
+    vm.quarantine_role = undefined;
+    
+    vm.valid = function() {
+        if (!vm.quarantine_role) {
+            return false;
+        }
+
+        return true;
+    };
+
+    vm.save = function() {
+        var result = {};
+
+        result.quarantine_role = vm.quarantine_role;
+
+        $modalInstance.close(result);
+    }
+
+    vm.cancel = function() {
+        $modalInstance.dismiss();
+    }
+}
+
+function CentrifyAuthTimeoutController($modalInstance) {
+    var vm = this;
+
+    vm.auth_timeout = undefined;
+    
+    vm.valid = function() {
+        if (!vm.auth_timeout) {
+            return false;
+        }
+        if(!isInteger(vm.auth_timeout)) {
+            return false;
+        }
+
+        return true;
+    };
+
+    vm.save = function() {
+        var result = {};
+
+        result.auth_timeout = vm.auth_timeout
+
+        $modalInstance.close(result);
+    }
+
+    vm.cancel = function() {
+        $modalInstance.dismiss();
+    }
+}
+
+angular.module('mmcentrifyWebui', [])
+    .controller('CentrifySideConfigController', [
         '$scope', 'MinemeldConfigService', 'MineMeldRunningConfigStatusService',
         'toastr', '$modal', 'ConfirmService', '$timeout',
-        OKTASideConfigController
+        CentrifySideConfigController
     ])
     .config(['$stateProvider', function($stateProvider) {
-        $stateProvider.state('nodedetail.oktainfo', {
-            templateUrl: '/extensions/webui/mmoktaWebui/okta.output.info.html',
+        $stateProvider.state('nodedetail.centrifyinfo', {
+            templateUrl: '/extensions/webui/mmcentrifyWebui/centrify.output.info.html',
             controller: 'NodeDetailInfoController',
             controllerAs: 'vm'
         });
     }])
     .run(['NodeDetailResolver', '$state', function(NodeDetailResolver, $state) {
-        NodeDetailResolver.registerClass('mmokta.node.OktaOutput', {
+        NodeDetailResolver.registerClass('mmcentrify.node.CentrifyOutput', {
             tabs: [{
                 icon: 'fa fa-circle-o',
                 tooltip: 'INFO',
-                state: 'nodedetail.oktainfo',
+                state: 'nodedetail.centrifyinfo',
                 active: false
             },
             {

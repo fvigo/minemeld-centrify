@@ -88,58 +88,48 @@
 </div>
 <div class="row">
     <div class="col-sm-6 col-md-6">
-        <table class="table table-condensed nodedetail-info-table" ng-controller="OKTASideConfigController as sideConfig">
+        <table class="table table-condensed nodedetail-info-table" ng-controller="CentrifySideConfigController as sideConfig">
             <colgroup>
                 <col style="width: 30%">
                 <col>
             </colgroup>
             <tbody>
                 <tr>
-                    <td>BASE URL</td>
-                    <td tooltip="set base url" class="nodedetail-info-clickable" ng-click="sideConfig.setBaseUrl()">
-                        <span ng-if="!sideConfig.okta_base_url"><em>Not set</em></span>
-                        <span ng-if="sideConfig.okta_base_url">{{ sideConfig.okta_base_url }}</span>
-                    </td>
-                </tr>
-                <tr>            
-                <tr>
-                    <td>OKTA TOKEN</td>
-                    <td tooltip="set okta token" class="nodedetail-info-clickable" ng-click="sideConfig.setOktaToken()">
-                        <span ng-if="!sideConfig.okta_token"><em>Not set</em></span>
-                        <span ng-if="sideConfig.okta_token" class="label label-success"><span class="glyphicon glyphicon-ok" aria-hidden="true">
+                    <td>CENTRIFY TENANT</td>
+                    <td tooltip="set centrify tenant" class="nodedetail-info-clickable" ng-click="sideConfig.setCentrifyTenant()">
+                        <span ng-if="!sideConfig.centrify_tenant"><em>Not set</em></span>
+                        <span ng-if="sideConfig.centrify_tenant">{{ sideConfig.centrify_tenant }}</span>
                     </td>
                 </tr>
                 <tr>
-                    <td>QUARANTINE GROUP</td>
-                    <td tooltip="set quarantine group" class="nodedetail-info-clickable" ng-click="sideConfig.setQuarantineGroup()">
-                        <span ng-if="!sideConfig.quarantine_group"><em>Not set</em></span>
-                        <span ng-if="sideConfig.quarantine_group">{{ sideConfig.quarantine_group }}</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td>SUSPEND USER</td>
-                    <td tooltip="suspend user" class="nodedetail-info-clickable" ng-click="sideConfig.toggleSuspendUser()">
-                        <span ng-if="sideConfig.suspend_user === undefined"><em>Not set (default disabled)</em></span>
-                        <span ng-if="sideConfig.suspend_user !== undefined && !sideConfig.suspend_user" class="label label-default"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></span>
-                        <span ng-if="sideConfig.suspend_user" class="label label-success"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></span>
-                    </td>                    
-                </tr>
-                <tr>
-                    <td>UNSUSPEND USER</td>
-                    <td tooltip="unsuspend user" class="nodedetail-info-clickable" ng-click="sideConfig.toggleUnsuspendUser()">
-                        <span ng-if="sideConfig.unsuspend_user === undefined"><em>Not set (default disabled)</em></span>
-                        <span ng-if="sideConfig.unsuspend_user !== undefined && !sideConfig.unsuspend_user" class="label label-default"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></span>
-                        <span ng-if="sideConfig.unsuspend_user" class="label label-success"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></span>
-                    </td>                    
-                </tr>
-                <tr>
-                    <td>CLEAR USER SESSIONS</td>
-                    <td tooltip="clear user sessions" class="nodedetail-info-clickable" ng-click="sideConfig.toggleClearUserSessions()">
-                        <span ng-if="sideConfig.clear_user_sessions === undefined"><em>Not set (default disabled)</em></span>
-                        <span ng-if="sideConfig.clear_user_sessions !== undefined && !sideConfig.clear_user_sessions" class="label label-default"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></span>
-                        <span ng-if="sideConfig.clear_user_sessions" class="label label-success"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></span>
+                    <td>CENTRIFY USER</td>
+                    <td tooltip="set centrify user" class="nodedetail-info-clickable" ng-click="sideConfig.setCentrifyUser()">
+                        <span ng-if="!sideConfig.centrify_user"><em>Not set</em></span>
+                        <span ng-if="sideConfig.centrify_user">{{ sideConfig.centrify_user }}</span>
                     </td>
                 </tr>                
+                <tr>            
+                <tr>
+                    <td>API PASSWORD</td>
+                    <td tooltip="set api password" class="nodedetail-info-clickable" ng-click="sideConfig.setCentrifyPassword()">
+                        <span ng-if="!sideConfig.centrify_password"><em>Not set</em></span>
+                        <span ng-if="sideConfig.centrify_password" class="label label-success"><span class="glyphicon glyphicon-ok" aria-hidden="true">
+                    </td>
+                </tr>
+                <tr>
+                    <td>QUARANTINE ROLE</td>
+                    <td tooltip="set quarantine role" class="nodedetail-info-clickable" ng-click="sideConfig.setQuarantineRole()">
+                        <span ng-if="!sideConfig.quarantine_role"><em>Not set</em></span>
+                        <span ng-if="sideConfig.quarantine_role">{{ sideConfig.quarantine_role }}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>AUTH TIMEOUT</td>
+                    <td tooltip="set auth timeout (hrs)" class="nodedetail-info-clickable" ng-click="sideConfig.setAuthTimeout()">
+                        <span ng-if="!sideConfig.auth_timeout"><em>Not set</em></span>
+                        <span ng-if="sideConfig.auth_timeout">{{ sideConfig.auth_timeout }}</span>
+                    </td>
+                </tr>               
             </tbody>
         </table>
     </div>

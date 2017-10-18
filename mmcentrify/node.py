@@ -2,6 +2,7 @@ import logging
 import json
 import yaml
 import os
+import datetime
 from mmcentrify import centrify as centrify
 
 from minemeld.ft.actorbase import ActorBaseFT
@@ -30,6 +31,16 @@ class CentrifyOutput(ActorBaseFT):
 
         self._load_side_config()
 
+        # Load Auth Cookie
+        self.auth_cookie_file_path = self.config.get('auth_cookie_file', None)
+        if self.auth_cookie_file_path is None:
+            self.auth_cookie_file_path = os.path.join(
+                os.environ['MM_CONFIG_DIR'],
+                '%s_auth_cookie.yml' % self.name
+                )
+
+        self._load_auth_cookie()
+
     def _load_side_config(self):
         try:
             with open(self.side_config_path, 'r') as f:
@@ -42,12 +53,63 @@ class CentrifyOutput(ActorBaseFT):
         # Centrify Endpoint Configuration
         self.centrifytarget = {
             'tenant' : sconfig.get('centrify_tenant', None),
-            'user' : sconfig.get('centrify_user', None),
-            'password' : sconfig.get('centrify_password', None),
+            'token' : None
         }
+
+        # Centrify API user and password
+        self.centrify_user = sconfig.get('centrify_user', None),
+        self.centrify_password = sconfig.get('centrify_password', None),
 
         # Centrify role name (not ID) to assign users to
         self.quarantine_role = sconfig.get('quarantine_role', None)
+
+        # Authentication Cookie Timeout (in hours, default 12)
+        self.auth_timeout = sconfig.get('auth_timeout', 12)
+
+    def _load_auth_cookie(self):
+        try:
+            with open(self.auth_cookie_file_path, 'r') as f:
+                cookiefile = yaml.safe_load(f)
+
+        except Exception as e:
+            LOG.error('{} - Error loading auth cookie: {}'.format(self.name, str(e)))
+            return
+
+        # Centrify Cookie and Last Auth Timestamp
+        self.centrifytarget['token'] = cookiefile.get('auth_cookie', None)
+        self.auth_cookie_timestamp = cookiefile.get('auth_cookie_timestamp', None)
+
+    # Determine if authentication is needed
+    def _is_auth_needed():
+        now = datetime.datetime.now()
+        auth_needed = True
+
+        if self.auth_cookie None:
+            return auth_needed
+
+        if self.auth_cookie_timestamp is None:
+            return auth_needed
+
+        delta = now - self.auth_cookie_timestamp
+            if delta < timedelta(hours=self.auth_timeout):
+                auth_needed = False
+
+        return auth_needed
+
+    def _save_auth_cookie(self):
+        cookie = {
+            'auth_cookie': self.auth_cookie
+            'auth_cookie_timestamp': self.auth_cookie_timestamp
+        }
+
+        try:
+            with open(self.auth_cookie_file_path, 'w') as f:
+                yaml.dump(cookie, f, default_flow_style=False)
+
+        except Exception as e:
+            LOG.error('{} - Error writing on auth cookie file: {}'.format(self.name, str(e)))
+            return
+
 
     def hup(self, source=None):
         LOG.info('{} - hup received, reload side config'.format(self.name))
@@ -56,11 +118,11 @@ class CentrifyOutput(ActorBaseFT):
 
     @base._counting('update.processed')
     def filtered_update(self, source=None, indicator=None, value=None):
-        if self.centrifytarget['user'] is None:
-            raise RuntimeError('{} - Centrify Username not set'.format(self.name))
+        if self.centrify_user is None:
+            raise RuntimeError('{} - Centrify API Username not set'.format(self.name))
 
-       if self.centrifytarget['password'] is None:
-            raise RuntimeError('{} - Centrify Password not set'.format(self.name))
+       if self.centrify_password is None:
+            raise RuntimeError('{} - Centrify API Password not set'.format(self.name))
 
        if self.centrifytarget['tenant'] is None:
             raise RuntimeError('{} - Centrify Tenant not set'.format(self.name))
@@ -70,21 +132,27 @@ class CentrifyOutput(ActorBaseFT):
             LOG.debug('{} - Received Indicator of type {}, expecting user-id, skipping'.format(self.name, value['type']))
             return
 
-        # Lookup user
-        user = centrify.lookup_user(self.centrifytarget, indicator)
+        # Authenticate if required
+        if _is_auth_needed():
+            now = datetime.datetime.now()
+            # Function will return only if authentication is successful, otherwise will throw an exception
+            cookie = centrify.authenticate(self.centrifytarget, self.centrifyuser, self.centrifypassword)
+            centrifytarget['token'] = cookie
+            self.auth_token_timestamp = now
+            _save_auth_cookie()
 
-        # Add user to Group
+        # Add user to Quarantine Role
         if self.quarantine_role is not None:
-            roleid = centrify.lookup_role(self.centrifytarget, self.quarantine_role)
-            centrify.add_user_to_role(self.centrifytarget, user, roleid)
+            centrify.lookup_and_add(self.centrifytarget, indicator, self.quarantine_role)
+    
 
     @base._counting('withdraw.processed')
     def filtered_withdraw(self, source=None, indicator=None, value=None):
-        if self.centrifytarget['user'] is None:
-            raise RuntimeError('{} - Centrify Username not set'.format(self.name))
+        if self.centrify_user is None:
+            raise RuntimeError('{} - Centrify API Username not set'.format(self.name))
 
-        if self.centrifytarget['password'] is None:
-            raise RuntimeError('{} - Centrify Password not set'.format(self.name))
+        if self.centrify_password is None:
+            raise RuntimeError('{} - Centrify API Password not set'.format(self.name))
 
        if self.centrifytarget['tenant'] is None:
             raise RuntimeError('{} - Centrify Tenant not set'.format(self.name))
@@ -94,11 +162,17 @@ class CentrifyOutput(ActorBaseFT):
             LOG.debug('{} - Received Indicator of type {}, expecting user-id, skipping'.format(self.name, value['type']))
             return
 
-        # Lookup user
-        user = centrify.lookup_user(self.centrifytarget, indicator)
+        # Authenticate if required
+        if _is_auth_needed():
+            now = datetime.datetime.now()
+            # Function will return only if authentication is successful, otherwise will throw an exception
+            cookie = centrify.authenticate(self.centrifytarget, self.centrifyuser, self.centrifypassword)
+            centrifytarget['token'] = cookie
+            self.auth_token_timestamp = now
+            _save_auth_cookie()
 
-        # Remove user from  Group
+        # Remove user to Quarantine Role
         if self.quarantine_role is not None:
-            roleid = centrify.lookup_role(self.centrifytarget, self.quarantine_role)
-            centrify.remove_user_from_role(self.centrifytarget, user, roleid)
+            centrify.lookup_and_remove(self.centrifytarget, indicator, self.quarantine_role)
+
 
