@@ -14,6 +14,7 @@ function CentrifySideConfigController($scope, MinemeldConfigService, MineMeldRun
     
     vm.auth_timeout = undefined;
     vm.quarantine_role = undefined;
+    vm.default_domain = undefined;
 
     vm.loadSideConfig = function() {
         var nodename = $scope.$parent.vm.nodename;
@@ -48,6 +49,12 @@ function CentrifySideConfigController($scope, MinemeldConfigService, MineMeldRun
                 vm.quarantine_role = undefined;
             }
 
+            if (result.default_domain) {
+                vm.default_domain = result.default_domain;
+            } else {
+                vm.default_domain = undefined;
+            }
+
             if (result.auth_timeout) {
                 vm.auth_timeout = result.auth_timeout;
             } else {
@@ -61,6 +68,7 @@ function CentrifySideConfigController($scope, MinemeldConfigService, MineMeldRun
             vm.centrify_password = undefined;
             vm.centrify_tenant = undefined;
             vm.quarantine_role = undefined;
+            vm.default_domain = undefined;
             vm.auth_timeout  = undefined;
         })
         .finally();
@@ -88,6 +96,10 @@ function CentrifySideConfigController($scope, MinemeldConfigService, MineMeldRun
 
         if (vm.quarantine_role) {
             side_config.quarantine_role = vm.quarantine_role;
+        }
+
+        if (vm.default_domain) {
+            side_config.default_domain = vm.default_domain;
         }
 
         return MinemeldConfigService.saveDataFile(
@@ -187,6 +199,30 @@ function CentrifySideConfigController($scope, MinemeldConfigService, MineMeldRun
             vm.loadSideConfig();
         }, (error) => {
             toastr.error('ERROR SETTING QUARANTINE ROLE: ' + error.statusText);
+        });
+    };
+
+   vm.setDefaultDomain = function() {
+
+        var mi = $modal.open({
+            templateUrl: '/extensions/webui/mmcentrifyWebui/centrify.output.defaultdomain.html',
+            controller: ['$modalInstance', CentrifyDefaultDomainController],
+            controllerAs: 'vm',
+            bindToController: true,
+            backdrop: 'static',
+            animation: false
+        });
+
+        mi.result.then((result) => {
+            vm.default_domain = result.default_domain;
+
+            return vm.saveSideConfig();
+        })
+        .then((result) => {
+            toastr.success('DEFAULT DOMAIN SET');
+            vm.loadSideConfig();
+        }, (error) => {
+            toastr.error('ERROR SETTING DEFAULT DOMAIN: ' + error.statusText);
         });
     };
 
@@ -332,16 +368,13 @@ function CentrifyQuarantineRoleController($modalInstance) {
     }
 }
 
-function CentrifyAuthTimeoutController($modalInstance) {
+function CentrifyDefaultDomainController($modalInstance) {
     var vm = this;
 
-    vm.auth_timeout = undefined;
+    vm.default_domain = undefined;
     
     vm.valid = function() {
-        if (!vm.auth_timeout) {
-            return false;
-        }
-        if(!isInteger(vm.auth_timeout)) {
+        if (!vm.default_domain) {
             return false;
         }
 
@@ -351,7 +384,36 @@ function CentrifyAuthTimeoutController($modalInstance) {
     vm.save = function() {
         var result = {};
 
-        result.auth_timeout = vm.auth_timeout
+        result.default_domain = vm.default_domain;
+
+        $modalInstance.close(result);
+    }
+
+    vm.cancel = function() {
+        $modalInstance.dismiss();
+    }
+}
+
+function CentrifyAuthTimeoutController($modalInstance) {
+    var vm = this;
+
+    vm.auth_timeout = undefined;
+    
+    vm.valid = function() {
+        if (!vm.auth_timeout) {
+            return false;
+        }
+        if(!Number.isInteger(parseInt(vm.auth_timeout))) {
+            return false;
+        }
+
+        return true;
+    };
+
+    vm.save = function() {
+        var result = {};
+
+        result.auth_timeout = parseInt(vm.auth_timeout)
 
         $modalInstance.close(result);
     }

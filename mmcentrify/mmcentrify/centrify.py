@@ -23,6 +23,52 @@ url_rolechange = '/Roles/UpdateRole'
 url_auth_start = '/Security/StartAuthentication'
 url_auth_advance = '/Security/AdvanceAuthentication'
 
+# Domain normalization
+# TODO: this needs enhancements
+def domain_normalize(input, conversion_table, default_domain):
+    domain = ""
+    domainFound = False
+
+    LOG.debug('{} - Invoked with input: {}'.format(MYNAME, input))
+
+    # Match domain\user format
+    m = re.search('^(?P<domain>[a-zA-Z0-9_\-\.]*)\\\\(?P<user>.*)$', input)
+    if m != None:
+        LOG.debug('{} - NetBIOS domain parser found\n\tUser: {}\n\tDomain: {}\n'.format(MYNAME,m.group('user'),m.group('domain')))
+        if m.group('domain'):
+                domain = m.group('domain')
+                domainFound = True
+    else:
+        LOG.debug('{} - NetBIOS domain parser did not find anything'.format(MYNAME))
+
+
+    # Match user@domain format
+    if domainFound == False:
+        m = re.search('^(?P<user>.*)@(?P<domain>.*)$', input)
+        if m != None:
+            LOG.debug('{} - Email domain parser found\n\tUser: {}\n\tDomain: {}\n'.format(MYNAME,m.group('user'),m.group('domain')))
+            if m.group('domain'):
+                    domain = m.group('domain')
+        else:
+            LOG.debug('{} - Email domain parser did not find anything'.format(MYNAME))
+
+        if domain != "":
+            LOG.debug('{} - Email domain parser did not find anything'.format(MYNAME))
+
+    if domainFound == True:
+        LOG.debug('{} - Ready to apply conversion table for domain: {}'.format(MYNAME,domain))
+    else:
+        LOG.debug('{} - No domain found - applying conversion table for empty domain if applicable'.format(MYNAME))
+
+    # TODO: Add conversion table code here
+    if domainFound:
+        output = input
+    else:
+        output = '{}@{}'.format(input,default_domain)
+
+    return output
+
+
 # Authenticate against API
 def authenticate(centrifytarget, user, password):
     tenanthost = '{}.my.centrify.com'.format(centrifytarget['tenant'])
@@ -248,4 +294,4 @@ def lookup_and_add(centrifytarget, user, role):
 
 # Look up user and role and remove user from role
 def lookup_and_remove(centrifytarget, user, role):
-    remove_user_from_role(centrifytarget, lookup_user(centrifytarget, user), lookup_group(centrifytarget, role))
+    remove_user_from_role(centrifytarget, lookup_user(centrifytarget, user), lookup_role(centrifytarget, role))

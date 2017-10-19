@@ -17,9 +17,10 @@ class CentrifyOutput(ActorBaseFT):
     
         self.centrifytarget = {
             'tenant' : None,
-            'user' : None,
-            'password' : None
+            'token' : None
         }
+
+        self.auth_cookie_timestamp = None
     
         # Load Side Config
         self.side_config_path = self.config.get('side_config', None)
@@ -57,11 +58,14 @@ class CentrifyOutput(ActorBaseFT):
         }
 
         # Centrify API user and password
-        self.centrify_user = sconfig.get('centrify_user', None),
-        self.centrify_password = sconfig.get('centrify_password', None),
+        self.centrify_user = sconfig.get('centrify_user', None)
+        self.centrify_password = sconfig.get('centrify_password', None)
 
         # Centrify role name (not ID) to assign users to
         self.quarantine_role = sconfig.get('quarantine_role', None)
+
+        # Default domain if username indicator does not contain it
+        self.default_domain = sconfig.get('default_domain', None)
 
         # Authentication Cookie Timeout (in hours, default 12)
         self.auth_timeout = sconfig.get('auth_timeout', 12)
@@ -80,25 +84,25 @@ class CentrifyOutput(ActorBaseFT):
         self.auth_cookie_timestamp = cookiefile.get('auth_cookie_timestamp', None)
 
     # Determine if authentication is needed
-    def _is_auth_needed():
+    def _is_auth_needed(self):
         now = datetime.datetime.now()
         auth_needed = True
 
-        if self.auth_cookie None:
+        if self.centrifytarget['token'] is None:
             return auth_needed
 
         if self.auth_cookie_timestamp is None:
             return auth_needed
 
         delta = now - self.auth_cookie_timestamp
-            if delta < timedelta(hours=self.auth_timeout):
-                auth_needed = False
+        if delta < datetime.timedelta(hours=self.auth_timeout):
+            auth_needed = False
 
         return auth_needed
 
     def _save_auth_cookie(self):
         cookie = {
-            'auth_cookie': self.auth_cookie
+            'auth_cookie': self.centrifytarget['token'],
             'auth_cookie_timestamp': self.auth_cookie_timestamp
         }
 
@@ -121,10 +125,10 @@ class CentrifyOutput(ActorBaseFT):
         if self.centrify_user is None:
             raise RuntimeError('{} - Centrify API Username not set'.format(self.name))
 
-       if self.centrify_password is None:
+        if self.centrify_password is None:
             raise RuntimeError('{} - Centrify API Password not set'.format(self.name))
 
-       if self.centrifytarget['tenant'] is None:
+        if self.centrifytarget['tenant'] is None:
             raise RuntimeError('{} - Centrify Tenant not set'.format(self.name))
 
         # Work exclusively with user-id indicators
@@ -133,17 +137,17 @@ class CentrifyOutput(ActorBaseFT):
             return
 
         # Authenticate if required
-        if _is_auth_needed():
+        if self._is_auth_needed():
             now = datetime.datetime.now()
             # Function will return only if authentication is successful, otherwise will throw an exception
-            cookie = centrify.authenticate(self.centrifytarget, self.centrifyuser, self.centrifypassword)
-            centrifytarget['token'] = cookie
-            self.auth_token_timestamp = now
-            _save_auth_cookie()
+            cookie = centrify.authenticate(self.centrifytarget, self.centrify_user, self.centrify_password)
+            self.centrifytarget['token'] = cookie
+            self.auth_cookie_timestamp = now
+            self._save_auth_cookie()
 
         # Add user to Quarantine Role
         if self.quarantine_role is not None:
-            centrify.lookup_and_add(self.centrifytarget, indicator, self.quarantine_role)
+            centrify.lookup_and_add(self.centrifytarget, centrify.domain_normalize(indicator, None, self.default_domain), self.quarantine_role)
     
 
     @base._counting('withdraw.processed')
@@ -154,7 +158,7 @@ class CentrifyOutput(ActorBaseFT):
         if self.centrify_password is None:
             raise RuntimeError('{} - Centrify API Password not set'.format(self.name))
 
-       if self.centrifytarget['tenant'] is None:
+        if self.centrifytarget['tenant'] is None:
             raise RuntimeError('{} - Centrify Tenant not set'.format(self.name))
 
         # Work exclusively with user-id indicators
@@ -163,16 +167,14 @@ class CentrifyOutput(ActorBaseFT):
             return
 
         # Authenticate if required
-        if _is_auth_needed():
+        if self._is_auth_needed():
             now = datetime.datetime.now()
             # Function will return only if authentication is successful, otherwise will throw an exception
-            cookie = centrify.authenticate(self.centrifytarget, self.centrifyuser, self.centrifypassword)
-            centrifytarget['token'] = cookie
-            self.auth_token_timestamp = now
-            _save_auth_cookie()
+            cookie = centrify.authenticate(self.centrifytarget, self.centrify_user, self.centrify_password)
+            self.centrifytarget['token'] = cookie
+            self.auth_cookie_timestamp = now
+            self._save_auth_cookie()
 
         # Remove user to Quarantine Role
         if self.quarantine_role is not None:
-            centrify.lookup_and_remove(self.centrifytarget, indicator, self.quarantine_role)
-
-
+            centrify.lookup_and_remove(self.centrifytarget, centrify.domain_normalize(indicator, None, self.default_domain), self.quarantine_role)

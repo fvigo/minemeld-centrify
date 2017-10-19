@@ -124,6 +124,13 @@
                     </td>
                 </tr>
                 <tr>
+                    <td>DEFAULT DOMAIN</td>
+                    <td tooltip="set default domain" class="nodedetail-info-clickable" ng-click="sideConfig.setDefaultDomain()">
+                        <span ng-if="!sideConfig.default_domain"><em>Not set</em></span>
+                        <span ng-if="sideConfig.default_domain">{{ sideConfig.default_domain }}</span>
+                    </td>
+                </tr>                
+                <tr>
                     <td>AUTH TIMEOUT</td>
                     <td tooltip="set auth timeout (hrs)" class="nodedetail-info-clickable" ng-click="sideConfig.setAuthTimeout()">
                         <span ng-if="!sideConfig.auth_timeout"><em>Not set</em></span>

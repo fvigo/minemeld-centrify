@@ -33,6 +33,9 @@ if __name__ == "__main__":
     default_role1=_testconfig['default_role1']
     default_role2=_testconfig['default_role2']
 
+    conversion_table=_testconfig['conversion_table']
+    default_domain=_testconfig['default_domain']
+
     # Check arguments to determine user nad role
     if len(sys.argv) != 3:
         LOG.info('Arguments not provided! Using default!')
@@ -53,6 +56,12 @@ if __name__ == "__main__":
         'token' : None
     }
 
+    # Test domain normalization
+    LOG.info('About to normalize user %s (default_domain is %s, conversion_table is %s)' % (user, default_domain, conversion_table))
+    user = centrify.domain_normalize(user, conversion_table, default_domain)
+    LOG.info('Normalized user to %s' % (user))
+
+    LOG.info('')
     # Test atomic functions
 
     token = centrify.authenticate(centrifytarget, centrify_user, centrify_password)
